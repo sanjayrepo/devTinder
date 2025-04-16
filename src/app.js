@@ -4,16 +4,52 @@ const app = express();
 const connectDB = require("./config/database");
 const User = require("./models/user");
 
+const { validateSignupData } = require("./utils/validator");
+
+const bcrypt = require("bcrypt");
+
 app.use(express.json());
 
 app.post("/signup", async (req, res) => {
-  console.log(req.body);
-  const user = new User(req.body);
   try {
+    //validation of data
+    await validateSignupData(req);
+
+    const { firstName, lastName, emailId, password } = req.body;
+
+    //Encrypt the password
+    const passwordHash = await bcrypt.hash(password, 10);
+    console.log(passwordHash);
+
+    const user = new User({
+      firstName,
+      lastName,
+      emailId,
+      password: passwordHash,
+    });
+
     await user.save();
     res.send("User Added Successfully.");
   } catch (error) {
-    res.status(400).send("Error saving user" + error.message);
+    res.status(400).send("Error :" + error.message);
+  }
+});
+
+app.post("/login", async (req, res) => {
+  try {
+    const { emailId, password } = req.body;
+    const user = await User.findOne({ emailId: emailId });
+    if (!user) {
+      throw new Error("Invalid credentials");
+    }
+    const isPasswardValid = await bcrypt.compare(password, user.password);
+    if (isPasswardValid) {
+      res.send("Login Successful");
+    } else {
+      throw new Error("Invalid credentials");
+    }
+  } catch (error) {
+    res.status(400).send("Error :" + error.message);
   }
 });
 
@@ -63,12 +99,11 @@ app.patch("/user/:userId", async (req, res) => {
       ALLOWED_UPDATES.includes(k)
     );
 
-  
     if (!isUpdateAllowed) {
       throw new Error("Update Not allowed");
     }
-    if(data?.skills.length>10){
-      throw new Error ("Skills cann't be more than 10")
+    if (data?.skills.length > 10) {
+      throw new Error("Skills cann't be more than 10");
     }
     await User.findByIdAndUpdate({ _id: userId }, data, {
       returnDocument: "after",

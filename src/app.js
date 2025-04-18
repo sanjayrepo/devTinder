@@ -46,10 +46,10 @@ app.post("/login", async (req, res) => {
     if (!user) {
       throw new Error("Invalid credentials");
     }
-    const isPasswardValid = await bcrypt.compare(password, user.password);
+    const isPasswardValid = await user.validatePassword(password);
     if (isPasswardValid) {
       //create a JWT token
-      const token = await jwt.sign({ _id: user._id }, "DEV@Tinder$790",{expiresIn:"1d"});
+      const token = await user.getJWT()
 
       //Add the token to cookies and send the response back to the user.
 

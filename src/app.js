@@ -12,10 +12,12 @@ const jwt = require("jsonwebtoken");
 const authRouter = require("./routes/auth")
 const profileRouter = require("./routes/profile")
 const requistRouter = require("./routes/request")
+const userRoute = require('./routes/user')
 
 app.use("/",authRouter)
 app.use("/",profileRouter)
 app.use("/",requistRouter)
+app.use("/",userRoute)
 
 
 

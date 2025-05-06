@@ -16,12 +16,12 @@ requiestRouter.post("/request/send/:status/:toUserId", userAuth, async (req, res
     if (!allowedStatuses.includes(status)) {
       return res.status(400).json({ message: "Invalid status type: " + status });
     }
-    if(toUserId === fromUserId){
+    if (toUserId === fromUserId) {
 
     }
 
     const toUser = await User.findById(toUserId)
-    if (!toUser){
+    if (!toUser) {
       return res.status(400).json({ message: "User not found." })
     }
 
@@ -33,7 +33,7 @@ requiestRouter.post("/request/send/:status/:toUserId", userAuth, async (req, res
     })
     const data = await connectionRequest.save()
     res.json({
-      message: req.user.firstName + " is "+ status + " in "+ toUser.firstName,
+      message: req.user.firstName + " is " + status + " in " + toUser.firstName,
       data
     })
 
@@ -52,6 +52,35 @@ requiestRouter.post("/request/send/:status/:toUserId", userAuth, async (req, res
     res.status(400).send("Error :" + error.message)
   }
 
+})
+
+requiestRouter.post("/request/review/:status/:requestId", userAuth, async (req, res) => {
+  try {
+    const loggedInUser = req.user;
+    const { status } = req.params;
+    const { requestId } = req.params;
+
+    const allowedStatus = ["accepted", "rejected"];
+    if (!allowedStatus.includes(status)) {
+      return res.status(400).json({ message: "Status not allowed" })
+    }
+
+    const connectionRequest = await ConnectionRequest.findOne({
+      _id: requestId,
+      toUserId: loggedInUser._id,
+      status: "interested"
+    })
+
+    if (!connectionRequest) {
+      return res.status(400).json({ message: "Connection request not found." })
+    }
+    connectionRequest.status = status;
+    const data = await connectionRequest.save()
+
+    res.json({message:"Connection request " + status, data})
+  } catch (error) {
+    res.status(400).send("Error :" + error.message)
+  }
 })
 
 module.exports = requiestRouter;
